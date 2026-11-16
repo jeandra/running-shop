@@ -1,11 +1,11 @@
-import { Transform } from 'class-transformer';
 import { IsEmail, Length } from 'class-validator';
+import { normalizeEmail } from './normalize-email';
 
 export class RegisterDto {
   @Length(1, 80)
   name: string;
 
-  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  @normalizeEmail()
   @IsEmail()
   email: string;
 
