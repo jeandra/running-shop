@@ -1,0 +1,37 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: dev
+          POSTGRES_PASSWORD: dev
+          POSTGRES_DB: running_shop_test
+        ports:
+          - '5432:5432'
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://dev:dev@localhost:5432/running_shop_test?schema=public
+      TEST_DATABASE_URL: postgresql://dev:dev@localhost:5432/running_shop_test?schema=public
+      JWT_ACCESS_SECRET: ci-secret
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx prisma migrate deploy --schema apps/api/prisma/schema.prisma
+      - run: npm run lint --workspace apps/api
+      - run: npm run test --workspace apps/api
+      - run: npm run test:e2e --workspace apps/api
+      - run: npm run build --workspace apps/api
