@@ -6,3 +6,209 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+enum Role {
+  CUSTOMER
+  ADMIN
+}
+
+enum OrderStatus {
+  PENDING_PAYMENT
+  PAID
+  PROCESSING
+  SHIPPED
+  COMPLETED
+  EXPIRED
+  CANCELLED
+}
+
+model User {
+  id            String         @id @default(uuid())
+  name          String
+  email         String         @unique
+  passwordHash  String
+  role          Role           @default(CUSTOMER)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  addresses     Address[]
+  carts         Cart[]
+  orders        Order[]
+  refreshTokens RefreshToken[]
+}
+
+model RefreshToken {
+  id        String    @id @default(uuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Address {
+  id         String   @id @default(uuid())
+  userId     String
+  recipient  String
+  phone      String
+  street     String
+  city       String
+  postalCode String
+  isDefault  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Category {
+  id       String    @id @default(uuid())
+  name     String
+  slug     String    @unique
+  products Product[]
+}
+
+model Product {
+  id             String           @id @default(uuid())
+  categoryId     String
+  name           String
+  slug           String           @unique
+  brand          String
+  gender         String
+  description    String
+  price          Int
+  image          String?
+  weightGram     Int?
+  dropMm         Int?
+  stackMm        Int?
+  cushioning     String?
+  support        String?
+  terrain        String?
+  isActive       Boolean          @default(true)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  category       Category         @relation(fields: [categoryId], references: [id])
+  variants       ProductVariant[]
+  orderItems     OrderItem[]
+  stockMovements StockMovement[]
+
+  @@index([categoryId])
+  @@index([name])
+}
+
+model ProductVariant {
+  id             String          @id @default(uuid())
+  productId      String
+  sizeEu         Int
+  sku            String          @unique
+  stock          Int             @default(0)
+  isActive       Boolean         @default(true)
+  product        Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  cartItems      CartItem[]
+  orderItems     OrderItem[]
+  stockMovements StockMovement[]
+
+  @@unique([productId, sizeEu])
+}
+
+model Cart {
+  id        String     @id @default(uuid())
+  userId    String     @unique
+  createdAt DateTime   @default(now())
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items     CartItem[]
+}
+
+model CartItem {
+  id        String         @id @default(uuid())
+  cartId    String
+  variantId String
+  qty       Int
+  cart      Cart           @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  variant   ProductVariant @relation(fields: [variantId], references: [id])
+
+  @@unique([cartId, variantId])
+}
+
+model Order {
+  id              String          @id @default(uuid())
+  orderNumber     String          @unique
+  userId          String
+  addressSnapshot Json
+  subtotal        Int
+  shippingCost    Int
+  discount        Int             @default(0)
+  total           Int
+  status          OrderStatus     @default(PENDING_PAYMENT)
+  trackingNumber  String?
+  expiresAt       DateTime
+  paidAt          DateTime?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  user            User            @relation(fields: [userId], references: [id])
+  items           OrderItem[]
+  payments        Payment[]
+  stockMovements  StockMovement[]
+
+  @@index([userId, createdAt])
+}
+
+model OrderItem {
+  id            String         @id @default(uuid())
+  orderId       String
+  variantId     String
+  productId     String
+  nameSnapshot  String
+  sizeSnapshot  Int
+  priceSnapshot Int
+  qty           Int
+  order         Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  variant       ProductVariant @relation(fields: [variantId], references: [id])
+  product       Product        @relation(fields: [productId], references: [id])
+
+  @@index([orderId])
+}
+
+model Payment {
+  id          String    @id @default(uuid())
+  orderId     String
+  provider    String
+  providerRef String?
+  method      String?
+  amount      Int
+  status      String
+  rawPayload  Json?
+  paidAt      DateTime?
+  createdAt   DateTime  @default(now())
+  order       Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+}
+
+model WebhookEvent {
+  id          String    @id @default(uuid())
+  provider    String
+  eventId     String
+  payload     Json
+  processedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@unique([provider, eventId])
+}
+
+model StockMovement {
+  id        String         @id @default(uuid())
+  productId String
+  variantId String
+  change    Int
+  reason    String
+  orderId   String?
+  createdAt DateTime       @default(now())
+  product   Product        @relation(fields: [productId], references: [id])
+  variant   ProductVariant @relation(fields: [variantId], references: [id])
+  order     Order?         @relation(fields: [orderId], references: [id])
+
+  @@index([variantId, createdAt])
+}
