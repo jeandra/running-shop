@@ -64,4 +64,19 @@ export class AuthService {
       refreshToken: await this.tokens.issueRefresh(user.id),
     };
   }
+
+  async refresh(rawToken: string): Promise<AuthTokens> {
+    const rotated = await this.tokens.rotate(rawToken);
+
+    return {
+      accessToken: this.tokens.signAccess(rotated.userId, rotated.role),
+      refreshToken: rotated.raw,
+    };
+  }
+
+  async logout(rawToken: string | undefined): Promise<void> {
+    if (rawToken) {
+      await this.tokens.revoke(rawToken);
+    }
+  }
 }

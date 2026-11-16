@@ -4,11 +4,13 @@ import {
   HttpCode,
   HttpStatus,
   Post,
+  Req,
   Res,
+  UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
 import { ThrottlerGuard } from '@nestjs/throttler';
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
@@ -36,6 +38,37 @@ export class AuthController {
     this.setRefreshCookie(res, tokens.refreshToken);
 
     return { accessToken: tokens.accessToken };
+  }
+
+  @Post('refresh')
+  @HttpCode(HttpStatus.OK)
+  async refresh(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
+    const raw = this.readRefreshCookie(req);
+    if (!raw) {
+      throw new UnauthorizedException('Sesi tidak valid');
+    }
+
+    const tokens = await this.auth.refresh(raw);
+    this.setRefreshCookie(res, tokens.refreshToken);
+
+    return { accessToken: tokens.accessToken };
+  }
+
+  @Post('logout')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
+    await this.auth.logout(this.readRefreshCookie(req));
+    res.clearCookie(REFRESH_COOKIE, { path: '/auth' });
+  }
+
+  private readRefreshCookie(req: Request): string | undefined {
+    const prefix = `${REFRESH_COOKIE}=`;
+    const found = req.headers.cookie
+      ?.split(';')
+      .map((part) => part.trim())
+      .find((part) => part.startsWith(prefix));
+
+    return found?.slice(prefix.length);
   }
 
   private setRefreshCookie(res: Response, token: string): void {

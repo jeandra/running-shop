@@ -1,10 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Role } from '@prisma/client';
 import { createHash, randomBytes } from 'node:crypto';
 import { PrismaService } from '../prisma/prisma.service';
 
 const REFRESH_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+
+export type RotatedToken = { userId: string; role: Role; raw: string };
 
 @Injectable()
 export class TokenService {
@@ -29,6 +31,56 @@ export class TokenService {
     });
 
     return raw;
+  }
+
+  async rotate(rawToken: string): Promise<RotatedToken> {
+    const now = new Date();
+    const token = await this.prisma.refreshToken.findUnique({
+      where: { tokenHash: sha256(rawToken) },
+      include: { user: { select: { role: true } } },
+    });
+
+    if (!token) {
+      throw new UnauthorizedException('Sesi tidak valid');
+    }
+
+    if (token.revokedAt) {
+      await this.revokeAll(token.userId);
+      throw new UnauthorizedException('Sesi tidak valid');
+    }
+
+    if (token.expiresAt < now) {
+      throw new UnauthorizedException('Sesi tidak valid');
+    }
+
+    const { count } = await this.prisma.refreshToken.updateMany({
+      where: { id: token.id, revokedAt: null },
+      data: { revokedAt: now },
+    });
+
+    if (count === 0) {
+      throw new UnauthorizedException('Sesi tidak valid');
+    }
+
+    return {
+      userId: token.userId,
+      role: token.user.role,
+      raw: await this.issueRefresh(token.userId),
+    };
+  }
+
+  async revoke(rawToken: string): Promise<void> {
+    await this.prisma.refreshToken.updateMany({
+      where: { tokenHash: sha256(rawToken), revokedAt: null },
+      data: { revokedAt: new Date() },
+    });
+  }
+
+  async revokeAll(userId: string): Promise<void> {
+    await this.prisma.refreshToken.updateMany({
+      where: { userId, revokedAt: null },
+      data: { revokedAt: new Date() },
+    });
   }
 }
 
