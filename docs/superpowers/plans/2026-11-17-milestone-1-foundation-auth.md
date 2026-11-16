@@ -1,6 +1,6 @@
 # Milestone 1 — Fondasi dan Autentikasi Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Repositori monorepo yang berjalan dengan PostgreSQL, skema database penuh untuk P0, dan autentikasi JWT dengan rotasi refresh token sehingga register, login, refresh, logout, dan otorisasi peran terbukti lewat test.
 
@@ -47,7 +47,7 @@ Kondisi berikut tidak diwujudkan oleh satu requirement pun di PRD, tapi paling m
 - Consumes: tidak ada.
 - Produces: `PrismaService extends PrismaClient implements OnModuleInit` di `apps/api/src/prisma/prisma.service.ts`; `GET /health` → `200 { status: 'ok', db: 'ok' }`.
 
-- [ ] **Step 1: Tulis test yang gagal**
+- [x] **Step 1: Tulis test yang gagal**
 
 ```ts
 // apps/api/test/health.e2e-spec.ts
@@ -57,21 +57,21 @@ it('GET /health melaporkan aplikasi dan database hidup', async () => {
 });
 ```
 
-- [ ] **Step 2: Jalankan test, pastikan gagal**
+- [x] **Step 2: Jalankan test, pastikan gagal**
 
 Run: `npm run test:e2e --workspace apps/api -- health`
 Expected: FAIL karena `apps/api` belum ada.
 
-- [ ] **Step 3: Buat kerangka**
+- [x] **Step 3: Buat kerangka**
 
 `docker-compose.yml` berisi satu service `db` (image `postgres:17`, port `5432`, `POSTGRES_DB=running_shop`, user/password `dev`). `.env.example` memuat `DATABASE_URL=postgresql://dev:dev@localhost:5432/running_shop?schema=public` dan `JWT_ACCESS_SECRET=`. `apps/api/package.json` memakai skrip `start:dev`, `build`, `lint`, `test`, `test:e2e`. `main.ts` memasang `app.setGlobalPrefix('')` tanpa prefix, `ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true })`, lalu `listen(process.env.PORT ?? 3001)`. `HealthController` menjalankan `prisma.$queryRaw\`SELECT 1\`` dan mengembalikan `{ status: 'ok', db: 'ok' }`.
 
-- [ ] **Step 4: Jalankan test, pastikan lulus**
+- [x] **Step 4: Jalankan test, pastikan lulus**
 
 Run: `npm run test:e2e --workspace apps/api -- health`
 Expected: PASS 1 test.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git init && git add -A
@@ -91,7 +91,7 @@ git commit -m "chore: monorepo skeleton, postgres compose, health endpoint"
 - Consumes: `PrismaService` dari Task 1.
 - Produces: model `User`, `RefreshToken`, `Address`, `Category`, `Product`, `ProductVariant`, `Cart`, `CartItem`, `Order`, `OrderItem`, `Payment`, `WebhookEvent`, `StockMovement`; enum `Role { CUSTOMER ADMIN }` dan `OrderStatus { PENDING_PAYMENT PAID PROCESSING SHIPPED COMPLETED EXPIRED CANCELLED }`.
 
-- [ ] **Step 1: Tulis test yang gagal**
+- [x] **Step 1: Tulis test yang gagal**
 
 ```ts
 // apps/api/test/schema.spec.ts
@@ -110,12 +110,12 @@ it('menyimpan harga sebagai integer rupiah tanpa pembulatan', async () => {
 
 Normalisasi email huruf besar bukan urusan database; test-nya ada di Task 4.
 
-- [ ] **Step 2: Jalankan test, pastikan gagal**
+- [x] **Step 2: Jalankan test, pastikan gagal**
 
 Run: `npm run test --workspace apps/api -- schema`
 Expected: FAIL karena `prisma.productVariant` tidak ada.
 
-- [ ] **Step 3: Tulis skema**
+- [x] **Step 3: Tulis skema**
 
 Model dan kolom wajib (selain `id String @id @default(uuid())`, `createdAt DateTime @default(now())`, `updatedAt DateTime @updatedAt`):
 
@@ -137,13 +137,13 @@ model StockMovement { productId String; variantId String; change Int; reason Str
 
 Tambahkan relasi balik yang dibutuhkan Prisma. Kolom `Voucher` **tidak** dibuat: CART-05 ditunda per bagian 16 PRD.
 
-- [ ] **Step 4: Jalankan migrasi dan test**
+- [x] **Step 4: Jalankan migrasi dan test**
 
 Run: `npx prisma migrate dev --name init --schema apps/api/prisma/schema.prisma`
 Run: `npm run test --workspace apps/api -- schema`
 Expected: migrasi membuat 13 tabel; PASS 2 test.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/api/prisma apps/api/test/schema.spec.ts
@@ -163,7 +163,7 @@ git commit -m "feat(db): prisma schema for P0 entities"
 - Consumes: skema Task 2.
 - Produces: `seedDatabase(prisma: PrismaClient): Promise<{ adminId: string; customerId: string }>` di `apps/api/prisma/seed.ts`; akun `admin@toko.test` / `customer@toko.test` dengan password `Password123!`; 4 kategori: `Daily trainer`, `Tempo dan race`, `Trail`, `Stability`.
 
-- [ ] **Step 1: Tulis test yang gagal**
+- [x] **Step 1: Tulis test yang gagal**
 
 ```ts
 it('seed dapat dijalankan dua kali tanpa duplikat', async () => {
@@ -178,21 +178,21 @@ it('admin tersimpan dengan hash, bukan password mentah', async () => {
 });
 ```
 
-- [ ] **Step 2: Jalankan test, pastikan gagal**
+- [x] **Step 2: Jalankan test, pastikan gagal**
 
 Run: `npm run test --workspace apps/api -- seed`
 Expected: FAIL karena `seedDatabase` belum ada.
 
-- [ ] **Step 3: Implementasi seed**
+- [x] **Step 3: Implementasi seed**
 
 `seedDatabase` memakai `upsert` untuk user (berdasarkan `email`) dan kategori (berdasarkan `slug`), sehingga aman dijalankan berulang. Produk tidak di-seed di milestone ini; data katalog masuk rencana milestone berikutnya.
 
-- [ ] **Step 4: Jalankan test, pastikan lulus**
+- [x] **Step 4: Jalankan test, pastikan lulus**
 
 Run: `npm run test --workspace apps/api -- seed`
 Expected: PASS 2 test.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/api/prisma/seed.ts apps/api/package.json apps/api/test/seed.spec.ts
@@ -212,7 +212,7 @@ git commit -m "feat(db): idempotent seed for users and categories"
 - Consumes: `PrismaService` (Task 1), `Role` (Task 2).
 - Produces: `POST /auth/register` → `201 { id, email, role }`; `AuthService.register(dto: RegisterDto): Promise<{ id: string; email: string; role: Role }>`; `PasswordService.hash(plain: string): Promise<string>` dan `PasswordService.verify(hash: string, plain: string): Promise<boolean>`.
 
-- [ ] **Step 1: Tulis test yang gagal**
+- [x] **Step 1: Tulis test yang gagal**
 
 ```ts
 it('mendaftar dan tidak mengembalikan password', async () => {
@@ -228,21 +228,21 @@ it('field tak dikenal ditolak 400', async () => { /* body { ..., role: 'ADMIN' }
 it('body yang bukan JSON dijawab 400, bukan 500', async () => { /* kirim body 'bukan json' dengan Content-Type application/json → 400 */ });
 ```
 
-- [ ] **Step 2: Jalankan test, pastikan gagal**
+- [x] **Step 2: Jalankan test, pastikan gagal**
 
 Run: `npm run test:e2e --workspace apps/api -- auth-register`
 Expected: FAIL 404 karena route belum ada.
 
-- [ ] **Step 3: Implementasi**
+- [x] **Step 3: Implementasi**
 
 `RegisterDto`: `name` (`@Length(1, 80)`), `email` (`@IsEmail()`), `password` (`@Length(8, 128)`). `AuthService.register` menormalkan email dengan `trim().toLowerCase()`, menangkap `P2002` dan melempar `ConflictException`, lalu menyimpan `passwordHash` hasil `PasswordService.hash`. `role` tidak pernah diambil dari body; `whitelist: true` di Task 1 sudah menolak field liar.
 
-- [ ] **Step 4: Jalankan test, pastikan lulus**
+- [x] **Step 4: Jalankan test, pastikan lulus**
 
 Run: `npm run test:e2e --workspace apps/api -- auth-register`
 Expected: PASS 6 test.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/api/src/auth apps/api/test/auth-register.spec.ts
@@ -262,7 +262,7 @@ git commit -m "feat(auth): register with normalized email and argon2 hash"
 - Consumes: `AuthService.register`, `PasswordService`.
 - Produces: `AuthTokens { accessToken: string; refreshToken: string }`; `POST /auth/login` → `200 { accessToken }` dan cookie `rt`; `TokenService.issueRefresh(userId: string): Promise<string>`.
 
-- [ ] **Step 1: Tulis test yang gagal**
+- [x] **Step 1: Tulis test yang gagal**
 
 ```ts
 it('login benar mengembalikan access token dan cookie refresh', async () => {
@@ -276,21 +276,21 @@ it('password salah dan email tidak dikenal memberi pesan yang sama', async () =>
 it('permintaan login ke-11 dalam satu menit dijawab 429', async () => { /* loop 10 → 200/401, ke-11 → 429 */ });
 ```
 
-- [ ] **Step 2: Jalankan test, pastikan gagal**
+- [x] **Step 2: Jalankan test, pastikan gagal**
 
 Run: `npm run test:e2e --workspace apps/api -- auth-login`
 Expected: FAIL 404.
 
-- [ ] **Step 3: Implementasi**
+- [x] **Step 3: Implementasi**
 
 `AuthService.login` mencari user dengan email ternormalisasi; bila tidak ada, tetap jalankan `PasswordService.verify` terhadap hash dummy agar waktu respons serupa, lalu lempar `UnauthorizedException('Email atau password salah')`. Access token ditandatangani `JwtModule` dengan secret `JWT_ACCESS_SECRET`, `expiresIn: '15m'`, payload `{ sub, role }`. `TokenService.issueRefresh` membuat 32 byte acak (`randomBytes(32).toString('base64url')`), menyimpan `sha256`-nya di `RefreshToken` dengan `expiresAt = now + 7d`. `@ThrottlerModule` global dengan `ttl: 60_000, limit: 10`, hanya dipasang di `AuthController`.
 
-- [ ] **Step 4: Jalankan test, pastikan lulus**
+- [x] **Step 4: Jalankan test, pastikan lulus**
 
 Run: `npm run test:e2e --workspace apps/api -- auth-login`
 Expected: PASS 3 test.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/api/src/auth apps/api/src/app.module.ts apps/api/test/auth-login.spec.ts
@@ -309,7 +309,7 @@ git commit -m "feat(auth): login with jwt access token and refresh cookie"
 - Consumes: `TokenService.issueRefresh`.
 - Produces: `TokenService.rotate(rawToken: string): Promise<{ userId: string; raw: string }>`; `TokenService.revoke(rawToken: string): Promise<void>`; `TokenService.revokeAll(userId: string): Promise<void>`; `POST /auth/refresh` → `200 { accessToken }`; `POST /auth/logout` → `204`.
 
-- [ ] **Step 1: Tulis test yang gagal**
+- [x] **Step 1: Tulis test yang gagal**
 
 ```ts
 it('refresh mengembalikan token baru dan token lama tidak berlaku', async () => {
@@ -325,21 +325,21 @@ it('dua refresh bersamaan: satu menang, satu 401', async () => { /* Promise.all 
 it('refresh dengan token kedaluwarsa dijawab 401 tanpa memperpanjang sesi', async () => { /* expiresAt = kemarin → 401 */ });
 ```
 
-- [ ] **Step 2: Jalankan test, pastikan gagal**
+- [x] **Step 2: Jalankan test, pastikan gagal**
 
 Run: `npm run test:e2e --workspace apps/api -- auth-refresh`
 Expected: FAIL 404.
 
-- [ ] **Step 3: Implementasi**
+- [x] **Step 3: Implementasi**
 
 `rotate` mencari `RefreshToken` berdasarkan `sha256(raw)`. Tidak ditemukan → `UnauthorizedException`. `revokedAt != null` → `revokeAll(userId)` lalu `UnauthorizedException` (deteksi pemakaian ulang). `expiresAt < now` → `UnauthorizedException`. Bila valid: set `revokedAt = now`, terbitkan token baru. Perlindungan balapan memakai `updateMany({ where: { id, revokedAt: null }, data: { revokedAt: now } })` dan menolak bila `count === 0`.
 
-- [ ] **Step 4: Jalankan test, pastikan lulus**
+- [x] **Step 4: Jalankan test, pastikan lulus**
 
 Run: `npm run test:e2e --workspace apps/api -- auth-refresh`
 Expected: PASS 6 test.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/api/src/auth apps/api/test/auth-refresh.spec.ts
@@ -359,7 +359,7 @@ git commit -m "feat(auth): refresh rotation with reuse detection and logout"
 - Consumes: `jwt.strategy.ts` (Task 5), `Role` (Task 2).
 - Produces: `@Roles(Role.ADMIN)`; `JwtAuthGuard`; `RolesGuard`; `GET /users/me` → `200 { id, name, email, role }` tanpa `passwordHash`.
 
-- [ ] **Step 1: Tulis test yang gagal**
+- [x] **Step 1: Tulis test yang gagal**
 
 ```ts
 it('tanpa token dijawab 401', async () => { await request(server).get('/users/me').expect(401); });
@@ -368,21 +368,21 @@ it('profil tidak memuat passwordHash', async () => { /* → body tanpa key passw
 it('token kedaluwarsa dijawab 401', async () => { /* token exp -1s → 401 */ });
 ```
 
-- [ ] **Step 2: Jalankan test, pastikan gagal**
+- [x] **Step 2: Jalankan test, pastikan gagal**
 
 Run: `npm run test:e2e --workspace apps/api -- users-me`
 Expected: FAIL 404.
 
-- [ ] **Step 3: Implementasi**
+- [x] **Step 3: Implementasi**
 
 `JwtAuthGuard` memperluas `AuthGuard('jwt')`. `RolesGuard` membaca metadata `Roles` via `Reflector` dan membandingkan dengan `request.user.role`; tanpa metadata → lolos. `UsersController` memakai `@UseGuards(JwtAuthGuard)` dan `@Get('me')` mengembalikan field terpilih lewat `select` Prisma, bukan `delete` setelah query.
 
-- [ ] **Step 4: Jalankan test, pastikan lulus**
+- [x] **Step 4: Jalankan test, pastikan lulus**
 
 Run: `npm run test:e2e --workspace apps/api -- users-me`
 Expected: PASS 4 test.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/api/src/auth apps/api/src/users apps/api/test/users-me.spec.ts
@@ -401,7 +401,7 @@ git commit -m "feat(auth): role guard and current user profile"
 - Consumes: seluruh skrip npm dari Task 1–7.
 - Produces: workflow `CI` yang berjalan pada `push` dan `pull_request`.
 
-- [ ] **Step 1: Tulis workflow yang gagal**
+- [x] **Step 1: Tulis workflow yang gagal**
 
 ```yaml
 name: CI
@@ -431,17 +431,17 @@ jobs:
       - run: npm run build --workspace apps/api
 ```
 
-- [ ] **Step 2: Jalankan langkah yang sama secara lokal**
+- [x] **Step 2: Jalankan langkah yang sama secara lokal**
 
 Run: `npm ci && npm run lint --workspace apps/api && npm run test --workspace apps/api && npm run test:e2e --workspace apps/api && npm run build --workspace apps/api`
 Expected: seluruh perintah keluar dengan kode 0. Perintah ini identik dengan isi workflow; bila ada yang gagal, perbaiki sebelum push.
 
-- [ ] **Step 3: Push dan buktikan CI hijau**
+- [x] **Step 3: Push dan buktikan CI hijau**
 
 Run: `git push -u origin main`
 Expected: tab Actions menampilkan workflow `CI` selesai hijau pada commit terakhir. Bila merah, baca log langkah yang gagal dan perbaiki dengan commit baru.
 
-- [ ] **Step 4: Commit perubahan tersisa**
+- [x] **Step 4: Commit perubahan tersisa**
 
 ```bash
 git add .github/workflows/ci.yml apps/api/package.json
@@ -460,3 +460,12 @@ Validasi harga positif dan stok tidak negatif belum punya pemilik di milestone i
 
 - Database test berbagi instance dengan database dev; pemisahan memakai nama database berbeda, bukan container berbeda.
 - Cookie `sameSite: 'lax'` hanya bekerja bila frontend dan API berada di satu domain. Keputusan topologi deploy ditunda sampai milestone deployment; bila akhirnya beda domain, cookie harus diubah ke `none` + `secure` dan CORS dibuka.
+
+## Catatan pelaksanaan (penyimpangan dari rencana)
+
+- Test yang butuh database nyata masuk `apps/api/test/*.e2e-spec.ts`, bukan `*.spec.ts` di `src`; `npm run test` (unit) berjalan dengan `--passWithNoTests` sampai ada unit test murni.
+- `@nestjs/passport` dan `@nestjs/jwt` v12 ESM-only dan gagal di Jest CJS. Passport dibuang; `JwtAuthGuard` memakai `JwtService` langsung. `@nestjs/jwt` dipatok ke 11.0.2 (CJS).
+- `logout` memakai `res.clearCookie` sehingga header berisi `Expires=Thu, 01 Jan 1970`, bukan `Max-Age=0`.
+- Pemakaian ulang refresh token mencabut seluruh sesi pengguna (sesuai test pemakaian ulang). Assertion rencana "refresh token kedua masih 200 setelah pemakaian ulang" bertentangan dengan aturan itu dan tidak dipakai.
+- Docker tidak tersedia di mesin pengembang; Postgres 17 portable dipakai lokal, `docker-compose.yml` tetap disimpan untuk CI dan deploy. Instalasi npm lokal memblokir install script sehingga `npx prisma generate` dijalankan manual setelah perubahan skema; `npm ci` di CI menjalankan postinstall normal.
+- Workflow CI sudah dibuat dan seluruh langkahnya lulus lokal, tetapi belum dibuktikan hijau di GitHub karena repo belum punya remote.
