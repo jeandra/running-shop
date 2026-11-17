@@ -1,31 +1,34 @@
 import {
   IsBoolean,
   IsInt,
-  IsOptional,
   IsString,
   Length,
   Max,
   Min,
+  ValidateIf,
 } from 'class-validator';
 
+// IsOptional juga meloloskan null; field wajib memakai ValidateIf agar null jadi 400.
+const whenSet = (_object: unknown, value: unknown) => value !== undefined;
+
 export class UpdateVariantDto {
-  @IsOptional()
+  @ValidateIf(whenSet)
   @IsInt()
   @Min(39)
   @Max(45)
   sizeEu?: number;
 
-  @IsOptional()
+  @ValidateIf(whenSet)
   @IsInt()
   @Min(0)
   stock?: number;
 
-  @IsOptional()
+  @ValidateIf(whenSet)
   @IsString()
   @Length(1, 64)
   sku?: string;
 
-  @IsOptional()
+  @ValidateIf(whenSet)
   @IsBoolean()
   isActive?: boolean;
 }

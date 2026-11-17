@@ -241,3 +241,35 @@ it('page bukan angka dijawab 400', async () => {
     .set('Authorization', `Bearer ${token}`)
     .expect(400);
 });
+
+it('menolak null pada field wajib, menerima null untuk field opsional', async () => {
+  const created = await api()
+    .post('/admin/products')
+    .set('Authorization', `Bearer ${token}`)
+    .send(await createWithCategory())
+    .expect(201);
+  const url = `/admin/products/${created.body.id}`;
+
+  await api()
+    .patch(url)
+    .set('Authorization', `Bearer ${token}`)
+    .send({ price: null })
+    .expect(400);
+  await api()
+    .patch(url)
+    .set('Authorization', `Bearer ${token}`)
+    .send({ name: null })
+    .expect(400);
+  await api()
+    .patch(url)
+    .set('Authorization', `Bearer ${token}`)
+    .send({ isActive: null })
+    .expect(400);
+
+  const cleared = await api()
+    .patch(url)
+    .set('Authorization', `Bearer ${token}`)
+    .send({ image: null })
+    .expect(200);
+  expect(cleared.body.image).toBeNull();
+});

@@ -9,6 +9,7 @@ import {
   Length,
   Max,
   Min,
+  ValidateIf,
 } from 'class-validator';
 import {
   CUSHIONINGS,
@@ -17,72 +18,76 @@ import {
   TERRAINS,
 } from './create-product.dto';
 
+// Field wajib memakai ValidateIf, bukan IsOptional: IsOptional juga meloloskan null,
+// yang kemudian ditolak Prisma sebagai 500.
+const whenSet = (_object: unknown, value: unknown) => value !== undefined;
+
 export class UpdateProductDto {
-  @IsOptional()
+  @ValidateIf(whenSet)
   @IsString()
   @Length(1, 120)
   name?: string;
 
-  @IsOptional()
+  @ValidateIf(whenSet)
   @IsString()
   @Length(1, 80)
   brand?: string;
 
-  @IsOptional()
+  @ValidateIf(whenSet)
   @IsIn(GENDERS)
   gender?: string;
 
-  @IsOptional()
+  @ValidateIf(whenSet)
   @IsString()
   @Length(1, 5000)
   description?: string;
 
-  @IsOptional()
+  @ValidateIf(whenSet)
   @IsInt()
   @Min(1)
   @Max(2_000_000_000)
   price?: number;
 
-  @IsOptional()
+  @ValidateIf(whenSet)
   @IsString()
   @IsNotEmpty()
   categoryId?: string;
 
   @IsOptional()
   @IsUrl({ protocols: ['http', 'https'], require_protocol: true })
-  image?: string;
+  image?: string | null;
 
   @IsOptional()
   @IsInt()
   @Min(0)
   @Max(2000)
-  weightGram?: number;
+  weightGram?: number | null;
 
   @IsOptional()
   @IsInt()
   @Min(0)
   @Max(30)
-  dropMm?: number;
+  dropMm?: number | null;
 
   @IsOptional()
   @IsInt()
   @Min(0)
   @Max(80)
-  stackMm?: number;
+  stackMm?: number | null;
 
   @IsOptional()
   @IsIn(CUSHIONINGS)
-  cushioning?: string;
+  cushioning?: string | null;
 
   @IsOptional()
   @IsIn(SUPPORTS)
-  support?: string;
+  support?: string | null;
 
   @IsOptional()
   @IsIn(TERRAINS)
-  terrain?: string;
+  terrain?: string | null;
 
-  @IsOptional()
+  @ValidateIf(whenSet)
   @IsBoolean()
   isActive?: boolean;
 }

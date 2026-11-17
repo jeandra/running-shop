@@ -56,3 +56,14 @@ it('seed dua kali tidak menggandakan produk atau varian', async () => {
   expect(await prisma.product.count()).toBe(first.products);
   expect(await prisma.productVariant.count()).toBe(first.variants);
 });
+
+it('harga seed menyebar dari kelas pemula sampai race', async () => {
+  await seedDatabase(prisma);
+
+  const cheapest = await prisma.product.aggregate({ _min: { price: true } });
+  const dearest = await prisma.product.aggregate({ _max: { price: true } });
+
+  expect(cheapest._min.price).toBeGreaterThanOrEqual(600_000);
+  expect(cheapest._min.price).toBeLessThanOrEqual(1_000_000);
+  expect(dearest._max.price).toBeLessThanOrEqual(3_300_000);
+});

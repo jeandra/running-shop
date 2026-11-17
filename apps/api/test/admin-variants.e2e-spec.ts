@@ -216,3 +216,48 @@ it('produk atau varian tak dikenal dijawab 404', async () => {
     .send({ stock: 1 })
     .expect(404);
 });
+
+it('menolak null pada stok dan ukuran', async () => {
+  const product = await createProduct();
+  const created = await api()
+    .post(`/admin/products/${product.id}/variants`)
+    .set('Authorization', auth)
+    .send({ sizeEu: 42, stock: 3 })
+    .expect(201);
+
+  await api()
+    .patch(`/admin/variants/${created.body.id}`)
+    .set('Authorization', auth)
+    .send({ stock: null })
+    .expect(400);
+  await api()
+    .patch(`/admin/variants/${created.body.id}`)
+    .set('Authorization', auth)
+    .send({ sizeEu: null })
+    .expect(400);
+});
+
+it('ukuran yang dihapus bisa ditambahkan lagi', async () => {
+  const product = await createProduct();
+  const created = await api()
+    .post(`/admin/products/${product.id}/variants`)
+    .set('Authorization', auth)
+    .send({ sizeEu: 42, stock: 3 })
+    .expect(201);
+
+  await api()
+    .delete(`/admin/variants/${created.body.id}`)
+    .set('Authorization', auth)
+    .expect(204);
+
+  const revived = await api()
+    .post(`/admin/products/${product.id}/variants`)
+    .set('Authorization', auth)
+    .send({ sizeEu: 42, stock: 6 })
+    .expect(201);
+
+  expect(revived.body).toMatchObject({ stock: 6, isActive: true });
+
+  const detail = await api().get(`/products/${product.slug}`).expect(200);
+  expect(detail.body.variants[0].stock).toBe(6);
+});

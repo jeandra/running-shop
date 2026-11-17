@@ -99,14 +99,17 @@ it('mengurutkan harga naik dan turun', async () => {
   ]);
 });
 
-it.each(['?limit=100', '?page=0', '?page=abc', '?sort=ngawur'])(
-  'menolak query %s dengan 400',
-  async (query) => {
-    const res = await get(query).expect(400);
+it.each([
+  '?limit=100',
+  '?page=0',
+  '?page=abc',
+  '?page=99999999999999999999',
+  '?sort=ngawur',
+])('menolak query %s dengan 400', async (query) => {
+  const res = await get(query).expect(400);
 
-    expect(res.body.statusCode).toBe(400);
-  },
-);
+  expect(res.body.statusCode).toBe(400);
+});
 
 it('halaman melewati total mengembalikan daftar kosong', async () => {
   await makeProduct(prisma);

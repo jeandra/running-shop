@@ -227,6 +227,25 @@ export class AdminCatalogService {
       });
     } catch (error) {
       if (isUniqueViolation(error)) {
+        const existing = await this.prisma.productVariant.findUnique({
+          where: { productId_sizeEu: { productId, sizeEu: dto.sizeEu } },
+          select: { id: true, sku: true, isActive: true },
+        });
+
+        // Ukuran yang pernah dihapus masih memegang unique (productId, sizeEu);
+        // menambahkannya lagi berarti menghidupkan baris itu, bukan 409.
+        if (existing && !existing.isActive) {
+          return await this.prisma.productVariant.update({
+            where: { id: existing.id },
+            data: {
+              isActive: true,
+              stock: dto.stock,
+              sku: dto.sku ?? existing.sku,
+            },
+            select: VARIANT_SELECT,
+          });
+        }
+
         throw new ConflictException('Ukuran atau SKU sudah dipakai');
       }
       throw error;
