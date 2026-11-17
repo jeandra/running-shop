@@ -6,6 +6,7 @@ import { HealthController } from './health/health.controller';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { CatalogModule } from './catalog/catalog.module';
+import { AdminModule } from './admin/admin.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { CatalogModule } from './catalog/catalog.module';
     AuthModule,
     UsersModule,
     CatalogModule,
+    AdminModule,
     ThrottlerModule.forRoot({
       throttlers: [{ ttl: 60_000, limit: 10 }],
     }),
