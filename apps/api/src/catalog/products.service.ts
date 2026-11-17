@@ -13,6 +13,7 @@ export type ProductListItem = {
   image: string | null;
   category: { name: string; slug: string };
   stockTotal: number;
+  sku: string | null;
 };
 
 export type ProductDetail = {
@@ -51,7 +52,11 @@ export const PRODUCT_LIST_SELECT = {
   price: true,
   image: true,
   category: { select: { name: true, slug: true } },
-  variants: { where: { isActive: true }, select: { stock: true } },
+  variants: {
+    where: { isActive: true },
+    orderBy: { sizeEu: 'asc' },
+    select: { stock: true, sku: true },
+  },
 } satisfies Prisma.ProductSelect;
 
 export const PRODUCT_DETAIL_SELECT = {
@@ -122,6 +127,7 @@ export class ProductsService {
       items: rows.map(({ variants, ...product }) => ({
         ...product,
         stockTotal: variants.reduce((sum, variant) => sum + variant.stock, 0),
+        sku: variants[0]?.sku ?? null,
       })),
       page: query.page,
       limit: query.limit,

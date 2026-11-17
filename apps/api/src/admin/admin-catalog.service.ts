@@ -125,6 +125,7 @@ export class AdminCatalogService {
       items: rows.map(({ variants, ...product }) => ({
         ...product,
         stockTotal: variants.reduce((sum, variant) => sum + variant.stock, 0),
+        sku: variants[0]?.sku ?? null,
       })),
       page: query.page,
       limit: query.limit,
