@@ -449,5 +449,6 @@ Storefront Next.js, keranjang, checkout, Midtrans, filter kategori/harga/spesifi
 - Kategori: nama dicek unik lebih dulu (409 untuk nama sama), baru slug unik dibuat. Tanpa cek nama, `uniqueSlug` akan membuat akhiran `-2` untuk nama yang sama.
 - `prisma/seed.ts` mengimpor `dotenv/config`; skrip `npm run seed` memakai `ts-node` yang tidak memuat `.env` seperti `prisma db seed`.
 - Token admin/customer di test ditandatangani langsung lewat `JwtService.sign`, bukan lewat `/auth/login`, agar tidak terkena throttler 10 permintaan/menit.
-- Test e2e bersih: 12 suite, 72 test (7 suite lama + 5 baru).
+- Test e2e bersih: 12 suite, 77 test (7 suite lama + 5 baru).
+- Review akhir: `page` dibatasi `@Max(1_000_000)`; field wajib PATCH menolak `null` (400) sementara field nullable tetap bisa dikosongkan; POST varian menghidupkan ukuran yang pernah di-soft-delete; harga daily trainer seed diturunkan ke band 649rb–1,3jt.
 
