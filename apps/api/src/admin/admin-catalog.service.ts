@@ -281,4 +281,84 @@ export class AdminCatalogService {
       throw new BadRequestException('Kategori tidak dikenal');
     }
   }
+
+  async listCategories(): Promise<
+    { id: string; name: string; slug: string; productCount: number }[]
+  > {
+    const rows = await this.prisma.category.findMany({
+      orderBy: { name: 'asc' },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        _count: { select: { products: true } },
+      },
+    });
+
+    return rows.map(({ _count, ...category }) => ({
+      ...category,
+      productCount: _count.products,
+    }));
+  }
+
+  async createCategory(name: string): Promise<{
+    id: string;
+    name: string;
+    slug: string;
+  }> {
+    const duplicate = await this.prisma.category.count({ where: { name } });
+    if (duplicate > 0) {
+      throw new ConflictException('Kategori sudah ada');
+    }
+
+    const slug = await uniqueSlug(
+      slugify(name),
+      async (candidate) =>
+        (await this.prisma.category.count({ where: { slug: candidate } })) > 0,
+    );
+
+    try {
+      return await this.prisma.category.create({
+        data: { name, slug },
+        select: { id: true, name: true, slug: true },
+      });
+    } catch (error) {
+      if (isUniqueViolation(error)) {
+        throw new ConflictException('Kategori sudah ada');
+      }
+      throw error;
+    }
+  }
+
+  async updateCategory(
+    id: string,
+    name: string,
+  ): Promise<{ id: string; name: string; slug: string }> {
+    const exists = await this.prisma.category.count({ where: { id } });
+    if (exists === 0) {
+      throw new NotFoundException('Kategori tidak ditemukan');
+    }
+
+    return this.prisma.category.update({
+      where: { id },
+      data: { name },
+      select: { id: true, name: true, slug: true },
+    });
+  }
+
+  async deleteCategory(id: string): Promise<void> {
+    const exists = await this.prisma.category.count({ where: { id } });
+    if (exists === 0) {
+      throw new NotFoundException('Kategori tidak ditemukan');
+    }
+
+    const products = await this.prisma.product.count({
+      where: { categoryId: id },
+    });
+    if (products > 0) {
+      throw new ConflictException('Kategori masih punya produk');
+    }
+
+    await this.prisma.category.delete({ where: { id } });
+  }
 }
