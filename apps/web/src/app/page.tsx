@@ -27,7 +27,7 @@ type ProductList = {
 
 export default async function Home() {
   const res = await fetch(`${API_URL}/products?limit=12`, { cache: "no-store" });
-  const data: ProductList = await res.json();
+  const data: ProductList = res.ok ? await res.json() : ({ items: [] } as unknown as ProductList);
   const items = data.items ?? [];
 
   return (
@@ -38,7 +38,9 @@ export default async function Home() {
       >
         <h1 className="text-heading-sm font-medium text-ink-black">Running Shop</h1>
         <ul className="flex flex-1 list-none flex-col gap-[6px] p-0">
-          {items.map((product) => (
+          {items.length === 0 ? (
+            <li className="text-body text-concrete">Belum ada produk.</li>
+          ) : items.map((product) => (
             <li
               key={product.id}
               className="flex gap-[6px] rounded-[6px] border border-charcoal bg-paper-white p-4 shadow-[rgba(0,0,0,0.08)_1px_1px_6px_-1px]"

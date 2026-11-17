@@ -127,6 +127,7 @@ export class ProductsService {
       items: rows.map(({ variants, ...product }) => ({
         ...product,
         stockTotal: variants.reduce((sum, variant) => sum + variant.stock, 0),
+        // shortcut: card shows first active variant's SKU (smallest size); upgrade when multi-variant SKU display is needed
         sku: variants[0]?.sku ?? null,
       })),
       page: query.page,
