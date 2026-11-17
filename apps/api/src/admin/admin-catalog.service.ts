@@ -15,8 +15,10 @@ import {
 } from '../catalog/products.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateProductDto } from './dto/create-product.dto';
+import { CreateVariantDto } from './dto/create-variant.dto';
 import { ListAdminProductsDto } from './dto/list-admin-products.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
+import { UpdateVariantDto } from './dto/update-variant.dto';
 
 export type AdminVariant = ProductDetail['variants'][number] & {
   isActive: boolean;
@@ -41,6 +43,22 @@ const ADMIN_LIST_SELECT = {
   ...PRODUCT_LIST_SELECT,
   isActive: true,
 } satisfies Prisma.ProductSelect;
+
+const VARIANT_SELECT = {
+  id: true,
+  sizeEu: true,
+  sku: true,
+  stock: true,
+  isActive: true,
+} satisfies Prisma.ProductVariantSelect;
+
+export type AdminVariantRecord = {
+  id: string;
+  sizeEu: number;
+  sku: string;
+  stock: number;
+  isActive: boolean;
+};
 
 const ADMIN_DETAIL_SELECT = {
   id: true,
@@ -181,6 +199,76 @@ export class AdminCatalogService {
 
     if (count === 0) {
       throw new NotFoundException('Produk tidak ditemukan');
+    }
+  }
+
+  async createVariant(
+    productId: string,
+    dto: CreateVariantDto,
+  ): Promise<AdminVariantRecord> {
+    const product = await this.prisma.product.findUnique({
+      where: { id: productId },
+      select: { slug: true },
+    });
+
+    if (!product) {
+      throw new NotFoundException('Produk tidak ditemukan');
+    }
+
+    try {
+      return await this.prisma.productVariant.create({
+        data: {
+          productId,
+          sizeEu: dto.sizeEu,
+          stock: dto.stock,
+          sku: dto.sku ?? `${product.slug}-${dto.sizeEu}`,
+        },
+        select: VARIANT_SELECT,
+      });
+    } catch (error) {
+      if (isUniqueViolation(error)) {
+        throw new ConflictException('Ukuran atau SKU sudah dipakai');
+      }
+      throw error;
+    }
+  }
+
+  async updateVariant(
+    id: string,
+    dto: UpdateVariantDto,
+  ): Promise<AdminVariantRecord> {
+    await this.ensureVariant(id);
+
+    try {
+      return await this.prisma.productVariant.update({
+        where: { id },
+        data: dto,
+        select: VARIANT_SELECT,
+      });
+    } catch (error) {
+      if (isUniqueViolation(error)) {
+        throw new ConflictException('Ukuran atau SKU sudah dipakai');
+      }
+      throw error;
+    }
+  }
+
+  async softDeleteVariant(id: string): Promise<void> {
+    const { count } = await this.prisma.productVariant.updateMany({
+      where: { id },
+      data: { isActive: false },
+    });
+
+    if (count === 0) {
+      throw new NotFoundException('Varian tidak ditemukan');
+    }
+  }
+
+  private async ensureVariant(id: string): Promise<void> {
+    const count = await this.prisma.productVariant.count({ where: { id } });
+
+    if (count === 0) {
+      throw new NotFoundException('Varian tidak ditemukan');
     }
   }
 
