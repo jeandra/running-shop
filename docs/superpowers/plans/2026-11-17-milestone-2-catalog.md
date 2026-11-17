@@ -442,3 +442,12 @@ Storefront Next.js, keranjang, checkout, Midtrans, filter kategori/harga/spesifi
 - 28 produk × 7 varian ditulis dengan `upsert` per baris (±200 query) saat seed; cukup cepat untuk mesin lokal dan CI.
 - Slug tidak berubah saat rename, jadi URL lama tetap hidup tetapi tidak pernah mencerminkan nama baru.
 - Foto seed diputar ulang dari 12 URL; tampilan katalog akan terasa berulang sampai storage gambar dikerjakan.
+
+## Catatan pelaksanaan (penyimpangan dari rencana)
+
+- `uniqueSlug` berbentuk `uniqueSlug(base, exists)` yang generik, bukan menerima `PrismaClient`; dipakai produk dan kategori.
+- Kategori: nama dicek unik lebih dulu (409 untuk nama sama), baru slug unik dibuat. Tanpa cek nama, `uniqueSlug` akan membuat akhiran `-2` untuk nama yang sama.
+- `prisma/seed.ts` mengimpor `dotenv/config`; skrip `npm run seed` memakai `ts-node` yang tidak memuat `.env` seperti `prisma db seed`.
+- Token admin/customer di test ditandatangani langsung lewat `JwtService.sign`, bukan lewat `/auth/login`, agar tidak terkena throttler 10 permintaan/menit.
+- Test e2e bersih: 12 suite, 72 test (7 suite lama + 5 baru).
+
