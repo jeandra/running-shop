@@ -11,10 +11,8 @@ import { PasswordService } from './password.service';
 import { TokenService } from './token.service';
 
 export type PublicUser = { id: string; email: string; role: Role };
+export type AuthTokens = { accessToken: string; refreshToken: string; userId: string };
 
-export type AuthTokens = { accessToken: string; refreshToken: string };
-
-// hash argon2 dari password acak; dipakai agar email tak dikenal butuh waktu verifikasi yang sama
 const DUMMY_HASH =
   '$argon2id$v=19$m=65536,t=3,p=4$TKRmia3CK6N+/EVRWvitDw$MrOunVxVChYJyRve7t8rO5Dh0hbngZyuzYqJ6YX2KwQ';
 
@@ -62,6 +60,7 @@ export class AuthService {
     return {
       accessToken: this.tokens.signAccess(user.id, user.role),
       refreshToken: await this.tokens.issueRefresh(user.id),
+      userId: user.id,
     };
   }
 
@@ -71,6 +70,7 @@ export class AuthService {
     return {
       accessToken: this.tokens.signAccess(rotated.userId, rotated.role),
       refreshToken: rotated.raw,
+      userId: rotated.userId,
     };
   }
 

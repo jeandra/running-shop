@@ -4,6 +4,7 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { PasswordService } from './password.service';
 import { TokenService } from './token.service';
+import { CartModule } from '../cart/cart.module';
 
 @Module({
   imports: [
@@ -11,6 +12,7 @@ import { TokenService } from './token.service';
       secret: process.env.JWT_ACCESS_SECRET,
       signOptions: { expiresIn: '15m' },
     }),
+    CartModule,
   ],
   controllers: [AuthController],
   providers: [AuthService, PasswordService, TokenService],

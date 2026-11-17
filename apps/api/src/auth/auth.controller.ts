@@ -14,6 +14,7 @@ import { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
+import { CartService } from '../cart/cart.service';
 
 export const REFRESH_COOKIE = 'rt';
 const REFRESH_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
@@ -21,7 +22,7 @@ const REFRESH_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 @Controller('auth')
 @UseGuards(ThrottlerGuard)
 export class AuthController {
-  constructor(private readonly auth: AuthService) {}
+  constructor(private readonly auth: AuthService, private readonly cart: CartService) {}
 
   @Post('register')
   register(@Body() dto: RegisterDto) {
@@ -32,9 +33,15 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   async login(
     @Body() dto: LoginDto,
+    @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ) {
     const tokens = await this.auth.login(dto);
+    const guestSession = this.readCartCookie(req);
+    if (guestSession) {
+      await this.cart.mergeGuest(guestSession, tokens.userId).catch(() => undefined);
+      res.clearCookie('cart_session', { path: '/' });
+    }
     this.setRefreshCookie(res, tokens.refreshToken);
 
     return { accessToken: tokens.accessToken };
@@ -63,6 +70,16 @@ export class AuthController {
 
   private readRefreshCookie(req: Request): string | undefined {
     const prefix = `${REFRESH_COOKIE}=`;
+    const found = req.headers.cookie
+      ?.split(';')
+      .map((part) => part.trim())
+      .find((part) => part.startsWith(prefix));
+
+    return found?.slice(prefix.length);
+  }
+
+  private readCartCookie(req: Request): string | undefined {
+    const prefix = 'cart_session=';
     const found = req.headers.cookie
       ?.split(';')
       .map((part) => part.trim())
