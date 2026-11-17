@@ -200,6 +200,13 @@ export class AdminCatalogService {
     if (count === 0) {
       throw new NotFoundException('Produk tidak ditemukan');
     }
+
+    // Withdraw produk harus withdraw juga semua variannya, supaya ukuran
+    // produk itu tidak bisa dibeli lagi.
+    await this.prisma.productVariant.updateMany({
+      where: { productId: id },
+      data: { isActive: false },
+    });
   }
 
   async createVariant(

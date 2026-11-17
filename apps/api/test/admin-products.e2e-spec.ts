@@ -168,6 +168,27 @@ it('delete menyembunyikan dari publik tapi menyisakan baris', async () => {
   expect(row.isActive).toBe(false);
 });
 
+it('delete produk menonaktifkan juga variannya', async () => {
+  const created = await api()
+    .post('/admin/products')
+    .set('Authorization', `Bearer ${token}`)
+    .send(await createWithCategory())
+    .expect(201);
+
+  await makeVariant(prisma, created.body.id, 42, 3, true);
+
+  await api()
+    .delete(`/admin/products/${created.body.id}`)
+    .set('Authorization', `Bearer ${token}`)
+    .expect(204);
+
+  const adminDetail = await api()
+    .get(`/admin/products/${created.body.id}`)
+    .set('Authorization', `Bearer ${token}`)
+    .expect(200);
+  expect(adminDetail.body.variants[0].isActive).toBe(false);
+});
+
 it('PATCH isActive true menghidupkan kembali produk', async () => {
   const created = await api()
     .post('/admin/products')
