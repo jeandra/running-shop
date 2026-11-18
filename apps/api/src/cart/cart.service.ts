@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { randomUUID } from 'crypto';
 import type { Request, Response } from 'express';
@@ -6,7 +6,7 @@ import type { AuthUser } from '../auth/jwt-auth.guard';
 
 export const CART_COOKIE = 'cart_session';
 
-function readCookie(req: Request, name: string): string | undefined {
+export function readCookie(req: Request, name: string): string | undefined {
   const prefix = `${name}=`;
   const found = req.headers.cookie
     ?.split(';')
@@ -31,12 +31,7 @@ export class CartService {
         await this.mergeGuest(guestSession, user.id);
         res.clearCookie(CART_COOKIE, { path: '/' });
       }
-      const cart = await this.prisma.cart.upsert({
-        where: { userId: user.id },
-        create: { userId: user.id },
-        update: {},
-        select: { id: true },
-      });
+      const cart = await this.upsertCartByUser(user.id);
       (req as Request & { __cartId?: string }).__cartId = cart.id;
       return cart.id;
     }
@@ -52,14 +47,43 @@ export class CartService {
         maxAge: 30 * 24 * 60 * 60 * 1000,
       });
     }
-    const cart = await this.prisma.cart.upsert({
-      where: { sessionId },
-      create: { sessionId },
-      update: {},
-      select: { id: true },
-    });
+    const cart = await this.upsertCartBySession(sessionId);
     (req as Request & { __cartId?: string }).__cartId = cart.id;
     return cart.id;
+  }
+
+  private async upsertCartByUser(userId: string): Promise<{ id: string }> {
+    try {
+      return await this.prisma.cart.upsert({
+        where: { userId },
+        create: { userId },
+        update: {},
+        select: { id: true },
+      });
+    } catch (e) {
+      if ((e as { code?: string })?.code === 'P2002') {
+        const found = await this.prisma.cart.findUnique({ where: { userId }, select: { id: true } });
+        if (found) return found;
+      }
+      throw e;
+    }
+  }
+
+  private async upsertCartBySession(sessionId: string): Promise<{ id: string }> {
+    try {
+      return await this.prisma.cart.upsert({
+        where: { sessionId },
+        create: { sessionId },
+        update: {},
+        select: { id: true },
+      });
+    } catch (e) {
+      if ((e as { code?: string })?.code === 'P2002') {
+        const found = await this.prisma.cart.findUnique({ where: { sessionId }, select: { id: true } });
+        if (found) return found;
+      }
+      throw e;
+    }
   }
 
   async mergeGuest(sessionId: string, userId: string): Promise<void> {
@@ -125,11 +149,24 @@ export class CartService {
   async addItem(req: Request, res: Response, variantId: string, quantity: number) {
     const cartId = await this.resolveCart(req, res);
     const qty = Math.max(1, Math.floor(quantity || 1));
-    await this.prisma.cartItem.upsert({
-      where: { cartId_variantId: { cartId, variantId } },
-      create: { cartId, variantId, qty },
-      update: { qty: { increment: qty } },
-    });
+    const variant = await this.prisma.productVariant.findUnique({ where: { id: variantId }, select: { id: true } });
+    if (!variant) throw new NotFoundException('Varian tidak ditemukan');
+    try {
+      await this.prisma.cartItem.upsert({
+        where: { cartId_variantId: { cartId, variantId } },
+        create: { cartId, variantId, qty },
+        update: { qty: { increment: qty } },
+      });
+    } catch (e) {
+      if ((e as { code?: string })?.code === 'P2002') {
+        await this.prisma.cartItem.update({
+          where: { cartId_variantId: { cartId, variantId } },
+          data: { qty: { increment: qty } },
+        });
+      } else {
+        throw e;
+      }
+    }
     return this.getCart(req, res);
   }
 
