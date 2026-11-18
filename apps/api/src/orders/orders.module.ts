@@ -14,5 +14,6 @@ import { PrismaModule } from '../prisma/prisma.module';
   ],
   controllers: [OrdersController],
   providers: [OrdersService, OptionalJwtAuthGuard],
+  exports: [OrdersService],
 })
 export class OrdersModule {}

@@ -1,6 +1,6 @@
 import { Injectable, BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import type { Order } from '@prisma/client';
+import type { Order, OrderStatus } from '@prisma/client';
 
 @Injectable()
 export class OrdersService {
@@ -85,6 +85,22 @@ export class OrdersService {
       await this.prisma.productVariant.update({ where: { id: item.variantId }, data: { stock: { increment: item.qty } } });
     }
 
+    const updated = await this.prisma.order.findUnique({ where: { id }, include: { items: true } });
+    return updated!;
+  }
+
+  async listAll(status?: OrderStatus): Promise<Order[]> {
+    return this.prisma.order.findMany({
+      where: status ? { status } : undefined,
+      include: { items: true },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async updateStatus(id: string, status: OrderStatus, trackingNumber?: string): Promise<Order> {
+    const order = await this.prisma.order.findUnique({ where: { id }, include: { items: true } });
+    if (!order) throw new NotFoundException('Pesanan tidak ditemukan');
+    await this.prisma.order.update({ where: { id }, data: { status, trackingNumber: trackingNumber ?? order.trackingNumber } });
     const updated = await this.prisma.order.findUnique({ where: { id }, include: { items: true } });
     return updated!;
   }
