@@ -1,5 +1,4 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Req, Res, UseGuards } from '@nestjs/common';
-import { JwtModule } from '@nestjs/jwt';
 import { Request, Response } from 'express';
 import { CartService } from './cart.service';
 import { OptionalJwtAuthGuard } from './optional-jwt-auth.guard';
