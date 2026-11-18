@@ -64,6 +64,22 @@ export class OrdersService {
     return { order, cartId: cart.id };
   }
 
+  async expireDueOrders(): Promise<{ cancelled: number }> {
+    const now = new Date();
+    const due = await this.prisma.order.findMany({
+      where: { status: 'PENDING_PAYMENT', expiresAt: { lt: now } },
+      select: { id: true, userId: true },
+    });
+
+    let cancelled = 0;
+    for (const order of due) {
+      await this.cancel(order.id, order.userId);
+      cancelled += 1;
+    }
+
+    return { cancelled };
+  }
+
   async listOrders(userId: string): Promise<Order[]> {
     return this.prisma.order.findMany({ where: { userId }, include: { items: true }, orderBy: { createdAt: 'desc' } });
   }
