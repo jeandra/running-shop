@@ -63,4 +63,29 @@ export class OrdersService {
 
     return { order, cartId: cart.id };
   }
+
+  async listOrders(userId: string): Promise<Order[]> {
+    return this.prisma.order.findMany({ where: { userId }, include: { items: true }, orderBy: { createdAt: 'desc' } });
+  }
+
+  async findOne(id: string, userId: string): Promise<Order> {
+    const order = await this.prisma.order.findUnique({ where: { id }, include: { items: true } });
+    if (!order || order.userId !== userId) throw new NotFoundException('Pesanan tidak ditemukan');
+    return order;
+  }
+
+  async cancel(id: string, userId: string): Promise<Order> {
+    const order = await this.prisma.order.findUnique({ where: { id }, include: { items: true } });
+    if (!order || order.userId !== userId) throw new NotFoundException('Pesanan tidak ditemukan');
+    if (order.status !== 'PENDING_PAYMENT') throw new ConflictException('Status pesanan tidak valid untuk pembatalan');
+
+    await this.prisma.order.update({ where: { id }, data: { status: 'CANCELLED' } });
+    const items = await this.prisma.orderItem.findMany({ where: { orderId: order.id } });
+    for (const item of items) {
+      await this.prisma.productVariant.update({ where: { id: item.variantId }, data: { stock: { increment: item.qty } } });
+    }
+
+    const updated = await this.prisma.order.findUnique({ where: { id }, include: { items: true } });
+    return updated!;
+  }
 }
