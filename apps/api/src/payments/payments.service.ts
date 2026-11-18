@@ -56,6 +56,10 @@ export class PaymentsService {
     const order = await this.prisma.order.findUnique({ where: { id: input.orderId } });
     if (!order) return { processed: true };
 
+    if (order.status !== 'PENDING_PAYMENT') {
+      return { processed: true };
+    }
+
     const transactionStatus = (input.payload as { transaction?: { status?: string } }).transaction?.status;
     if (transactionStatus === 'payment_finish') {
       await this.prisma.order.update({ where: { id: order.id }, data: { status: 'PAID', paidAt: new Date() } });
