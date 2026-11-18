@@ -37,56 +37,56 @@
 **Interfaces:**
 - Produces: `OrdersService.checkout(input: { userId?: string; sessionId?: string }): Promise<{ order: Order; cartId: string }>`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```ts
 // POST /orders/checkout dengan keranjang guest+item → 201, order PENDING_PAYMENT, stok berkurang
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npm run test:e2e -- --testPathPattern orders-checkout` di `apps/api`
 Expected: FAIL (route belum ada)
 
-- [ ] **Step 3: Implement `OrdersService.checkout`**
+- [x] **Step 3: Implement `OrdersService.checkout`**
 
 Satu transaksi DB: ambil keranjang + item → validasi stok → decrement atomic → buat `Order` (status `PENDING_PAYMENT`, `expires_at`) + `OrderItem` (snapshot) → kurangi cart → return order.
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `npm run test:e2e -- --testPathPattern orders-checkout`
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ### Task 2: Payment gateway — Midtrans Snap sandbox
 
-- [ ] **Step 1: Write the failing test** — `POST /payments` membuat transaksi; `POST /payments/webhook` (verifikasi signature + idempotency) mengupdate status.
-- [ ] **Step 2: Run test to verify it fails** — route belum ada.
-- [ ] **Step 3: Implement** — `PaymentsService` memanggil Midtrans Snap (sandbox) via server key di env; webhook handler verifikasi signature, cek `WebhookEvent`, update order `PAID`/`FAILED`/`EXPIRED`, kembalikan stok bila gagal/expired.
-- [ ] **Step 4: Run test to verify it passes**.
-- [ ] **Step 5: Commit**.
+- [x] **Step 1: Write the failing test** — `POST /payments` membuat transaksi; `POST /payments/webhook` (verifikasi signature + idempotency) mengupdate status.
+- [x] **Step 2: Run test to verify it fails** — route belum ada.
+- [x] **Step 3: Implement** — `PaymentsService` memanggil Midtrans Snap (sandbox) via server key di env; webhook handler verifikasi signature, cek `WebhookEvent`, update order `PAID`/`FAILED`/`EXPIRED`, kembalikan stok bila gagal/expired.
+- [x] **Step 4: Run test to verify it passes**.
+- [x] **Step 5: Commit**.
 
 ### Task 3: Order API pembeli — riwayat, detail, batal
 
-- [ ] **Step 1: Write the failing test** — `GET /orders`, `GET /orders/:id`, `POST /orders/:id/cancel` (customer hanya boleh akses miliknya).
-- [ ] **Step 2: Run test to verify it fails**.
-- [ ] **Step 3: Implement** — `OrdersController`/`OrdersService` CRUD orders + cancel (hanya bila status masih `PENDING_PAYMENT`).
-- [ ] **Step 4: Run test to verify it passes**.
-- [ ] **Step 5: Commit**.
+- [x] **Step 1: Write the failing test** — `GET /orders`, `GET /orders/:id`, `POST /orders/:id/cancel` (customer hanya boleh akses miliknya).
+- [x] **Step 2: Run test to verify it fails**.
+- [x] **Step 3: Implement** — `OrdersController`/`OrdersService` CRUD orders + cancel (hanya bila status masih `PENDING_PAYMENT`).
+- [x] **Step 4: Run test to verify it passes**.
+- [x] **Step 5: Commit**.
 
 ### Task 4: Order admin — daftar, update status, resi
 
-- [ ] **Step 1: Write the failing test** — `GET /admin/orders`, `PATCH /admin/orders/:id` (status + tracking_number).
-- [ ] **Step 2: Run test to verify it fails**.
-- [ ] **Step 3: Implement** — admin module menambah orders endpoints.
-- [ ] **Step 4: Run test to verify it passes**.
-- [ ] **Step 5: Commit**.
+- [x] **Step 1: Write the failing test** — `GET /admin/orders`, `PATCH /admin/orders/:id` (status + tracking_number).
+- [x] **Step 2: Run test to verify it fails**.
+- [x] **Step 3: Implement** — admin module menambah orders endpoints.
+- [x] **Step 4: Run test to verify it passes**.
+- [x] **Step 5: Commit**.
 
 ### Task 5: Verify + commit (selesai milestone)
 
-- [ ] **Step 1: Run full verification** — `npm run lint`, `npm run build`, `npm run test:e2e` di `apps/api` (plus visual check halaman /cart → /orders di web).
-- [ ] **Step 2: Commit** milestone work.
+- [x] **Step 1: Run full verification** — `npm run lint`, `npm run build`, `npm run test:e2e` di `apps/api` (plus visual check halaman /cart → /orders di web).
+- [x] **Step 2: Commit** milestone work.
 
 ---
 
