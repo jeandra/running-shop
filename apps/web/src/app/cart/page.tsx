@@ -24,18 +24,20 @@ export default function CartPage() {
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
 
-  async function load() {
-    setLoading(true);
-    try {
-      const res = await fetch("/api/cart", { credentials: "include", cache: "no-store" });
-      if (res.ok) setCart(await res.json());
-    } finally {
-      setLoading(false);
-    }
-  }
-
   useEffect(() => {
+    let ignore = false;
+    async function load() {
+      try {
+        const res = await fetch("/api/cart", { credentials: "include", cache: "no-store" });
+        if (!ignore && res.ok) setCart(await res.json());
+      } finally {
+        if (!ignore) setLoading(false);
+      }
+    }
     load();
+    return () => {
+      ignore = true;
+    };
   }, []);
 
   async function updateQty(itemId: string, quantity: number) {
