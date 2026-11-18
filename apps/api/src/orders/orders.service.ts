@@ -1,10 +1,11 @@
 import { Injectable, BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import type { Order, OrderStatus } from '@prisma/client';
 
 @Injectable()
 export class OrdersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService, private readonly notifications: NotificationsService) {}
 
   async checkout(input: { userId?: string; sessionId?: string }): Promise<{ order: Order; cartId: string }> {
     const cart = input.userId
@@ -60,6 +61,15 @@ export class OrdersService {
     });
 
     await this.prisma.cartItem.deleteMany({ where: { cartId: cart.id } });
+
+    const user = await this.prisma.user.findUnique({ where: { id: order.userId } });
+    if (user) {
+      await this.notifications.sendEmail({
+        to: user.email,
+        subject: `Konfirmasi pesanan ${order.orderNumber}`,
+        body: `Pesanan ${order.orderNumber} telah dibuat dan menunggu pembayaran.`,
+      });
+    }
 
     return { order, cartId: cart.id };
   }

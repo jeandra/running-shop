@@ -4,9 +4,10 @@ import { PaymentsController } from './payments.controller';
 import { PaymentsService } from './payments.service';
 import { OptionalJwtAuthGuard } from '../cart/optional-jwt-auth.guard';
 import { PrismaModule } from '../prisma/prisma.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
-  imports: [PrismaModule, JwtModule.register({ secret: process.env.JWT_ACCESS_SECRET })],
+  imports: [PrismaModule, JwtModule.register({ secret: process.env.JWT_ACCESS_SECRET }), NotificationsModule],
   controllers: [PaymentsController],
   providers: [PaymentsService, OptionalJwtAuthGuard],
 })

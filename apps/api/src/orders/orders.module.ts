@@ -5,6 +5,7 @@ import { OrdersService } from './orders.service';
 import { OptionalJwtAuthGuard } from '../cart/optional-jwt-auth.guard';
 import { PrismaModule } from '../prisma/prisma.module';
 import { PrismaService } from '../prisma/prisma.service';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import { PrismaService } from '../prisma/prisma.service';
     JwtModule.register({
       secret: process.env.JWT_ACCESS_SECRET,
     }),
+    NotificationsModule,
   ],
   controllers: [OrdersController],
   providers: [OrdersService, OptionalJwtAuthGuard],

@@ -1,5 +1,6 @@
 import { Injectable, UnauthorizedException, NotFoundException, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { createHmac } from 'crypto';
 import type { Prisma } from '@prisma/client';
 
@@ -9,7 +10,7 @@ export class PaymentsService {
   private readonly webhookSecret = process.env.MIDTRANS_WEBHOOK_SECRET ?? '';
   private readonly baseUrl = process.env.MIDTRANS_BASE_URL ?? 'https://api.sandbox.midtrans.com';
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService, private readonly notifications: NotificationsService) {}
 
   async createTransaction(input: { orderId: string }): Promise<{ transactionId: string; paymentUrl: string }> {
     const order = await this.prisma.order.findUnique({ where: { id: input.orderId } });
@@ -58,6 +59,14 @@ export class PaymentsService {
     const transactionStatus = (input.payload as { transaction?: { status?: string } }).transaction?.status;
     if (transactionStatus === 'payment_finish') {
       await this.prisma.order.update({ where: { id: order.id }, data: { status: 'PAID', paidAt: new Date() } });
+      const user = await this.prisma.user.findUnique({ where: { id: order.userId } });
+      if (user) {
+        await this.notifications.sendEmail({
+          to: user.email,
+          subject: `Pembayaran pesanan ${order.orderNumber} berhasil`,
+          body: `Pembayaran pesanan ${order.orderNumber} telah berhasil.`,
+        });
+      }
       return { processed: true };
     }
 
