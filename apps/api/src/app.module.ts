@@ -8,6 +8,7 @@ import { UsersModule } from './users/users.module';
 import { CatalogModule } from './catalog/catalog.module';
 import { CartModule } from './cart/cart.module';
 import { OrdersModule } from './orders/orders.module';
+import { PaymentsModule } from './payments/payments.module';
 import { AdminModule } from './admin/admin.module';
 
 @Module({
@@ -18,6 +19,7 @@ import { AdminModule } from './admin/admin.module';
     CatalogModule,
     CartModule,
     OrdersModule,
+    PaymentsModule,
     AdminModule,
     ThrottlerModule.forRoot({
       throttlers: [{ ttl: 60_000, limit: 10 }],
