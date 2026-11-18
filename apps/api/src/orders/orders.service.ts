@@ -126,6 +126,21 @@ export class OrdersService {
   async updateStatus(id: string, status: OrderStatus, trackingNumber?: string): Promise<Order> {
     const order = await this.prisma.order.findUnique({ where: { id }, include: { items: true } });
     if (!order) throw new NotFoundException('Pesanan tidak ditemukan');
+
+    const allowed: Record<OrderStatus, OrderStatus[]> = {
+      PENDING_PAYMENT: ['PAID', 'CANCELLED', 'EXPIRED'],
+      PAID: ['PROCESSING', 'SHIPPED', 'COMPLETED'],
+      PROCESSING: ['SHIPPED', 'COMPLETED'],
+      SHIPPED: ['COMPLETED'],
+      COMPLETED: [],
+      CANCELLED: [],
+      EXPIRED: [],
+    };
+
+    if (!allowed[order.status].includes(status)) {
+      throw new ConflictException('Transisi status tidak valid');
+    }
+
     await this.prisma.order.update({ where: { id }, data: { status, trackingNumber: trackingNumber ?? order.trackingNumber } });
     const updated = await this.prisma.order.findUnique({ where: { id }, include: { items: true } });
     return updated!;
